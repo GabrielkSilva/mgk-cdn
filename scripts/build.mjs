@@ -5,7 +5,11 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const assetsDir = path.join(root, "assets");
 const outDir = path.join(root, "_site");
-const BASE_URL = (process.env.SITE_URL || "https://gabrielksilva.github.io/mgk-cdn").replace(/\/$/, "");
+const normalizeBase = (value) => {
+  const url = new URL(value.replace(/\/$/, ""));
+  return `${url.protocol}//${url.host.toLowerCase()}${url.pathname.replace(/\/$/, "")}`;
+};
+const BASE_URL = normalizeBase(process.env.SITE_URL || "https://gabrielksilva.github.io/mgk-cdn");
 const ASSET_PREFIX = "assets";
 
 const toPosix = (p) => p.split(path.sep).join("/");
