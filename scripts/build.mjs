@@ -101,9 +101,15 @@ const groups = [...tree.entries()]
     files: node.files,
     mb: round(node.bytes),
     types: Object.fromEntries(node.types),
+    index: `index/${slug(name)}.json`,
     categories: [...node.categories.entries()]
       .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([cat, s]) => ({ name: cat, files: s.files, mb: round(s.bytes) })),
+      .map(([cat, s]) => ({
+        name: cat,
+        files: s.files,
+        mb: round(s.bytes),
+        index: `index/${slug(name)}/${slug(cat)}.json`,
+      })),
   }));
 
 await rm(outDir, { recursive: true, force: true });
@@ -142,6 +148,12 @@ await writeFile(
       generated_at: new Date().toISOString(),
       total_files: items.length,
       total_mb: round(totalBytes),
+      entry_points: {
+        manifest: `${BASE_URL}/manifest.json`,
+        agents: `${BASE_URL}/AGENTS.md`,
+        llms_txt: `${BASE_URL}/llms.txt`,
+        category_index_pattern: `${BASE_URL}/index/<group>/<category>.json`,
+      },
       groups,
     },
     null,
@@ -189,6 +201,7 @@ await writeFile(
 > Static asset library served from GitHub Pages. ${items.length} files, ${round(totalBytes)} MB total, ${groups.length} top-level groups.
 
 ## How to use
+- Site root: ${BASE_URL}/ (serves \`index.json\`)
 - Full file index: ${BASE_URL}/manifest.json
 - Compact group index: ${BASE_URL}/index.json
 - Per-group index: ${BASE_URL}/index/<group>.json
@@ -227,7 +240,8 @@ Every file under \`/assets/\` is a real, directly fetchable resource.
 
 | URL | Typical size | Purpose |
 |---|---|---|
-| \`${BASE_URL}/index.json\` | ~2 KB | Group overview: names, file counts, sizes, types, categories. Start here. |
+| \`${BASE_URL}/\` | ~2 KB | Same payload as \`index.json\`; convenient when an agent only knows the base URL. |
+| \`${BASE_URL}/index.json\` | ~2 KB | Group overview: names, file counts, sizes, types, categories, and the path of each index file. Start here. |
 | \`${BASE_URL}/index/<group>/<category>.json\` | 5-40 KB | Every file in one category, absolute URLs. This is the sweet spot. |
 | \`${BASE_URL}/index/<group>.json\` | 300 KB+ | Every file in one group. |
 | \`${BASE_URL}/manifest.json\` | ~2.5 MB | Complete flat index with per-file bytes, type, name, variant, size. |
